@@ -57,10 +57,10 @@ public class Vector2D {
         if(getClass() != other.getClass()) return false;
 
         Vector2D check = (Vector2D) other;
-        if(check.hashCode() == other.hashCode()) return true;
-        return false;
-//        if(check.x != this.x || check.y != this.y) return false;
-//        return true;
+//        if(check.hashCode() == other.hashCode()) return true;
+//        return false;
+        if(check.x != this.x || check.y != this.y) return false;
+        return true;
     }
 
     public boolean isEqual(Vector2D other){
