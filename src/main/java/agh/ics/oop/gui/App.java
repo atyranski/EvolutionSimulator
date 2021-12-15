@@ -1,7 +1,6 @@
 package agh.ics.oop.gui;
 
-import agh.ics.oop.Animal;
-import agh.ics.oop.Vector2D;
+import agh.ics.oop.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -20,9 +19,9 @@ import java.util.Arrays;
 import static java.lang.System.out;
 
 public class App extends Application {
-    private static int INITIAL_ENERGY = 40;
-    private static int MAP_SIZE = 550;
-    private static int LEFT_PANEL_SIZE = 200;
+    final private int INITIAL_ENERGY = 40;
+    final private int MAP_SIZE = 550;
+    final private int LEFT_PANEL_SIZE = 200;
 
     private int width = 100;
     private int height = 100;
@@ -32,6 +31,8 @@ public class App extends Application {
     private float jungleRatio = 0.5f;
 
     private boolean isRunning = false;
+
+    private WorldMap worldMap1;
 
     @Override
     public void init() throws Exception {
@@ -83,7 +84,10 @@ public class App extends Application {
             b_openSimulator.setText("Open simulator");
             b_openSimulator.setMinSize(100, 30);
             b_openSimulator.setOnAction(actionEvent ->  {
-                openNewWindow();
+                this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio);
+                Platform.runLater(() -> {
+                    openNewWindow();
+                });
             });
 
             VBox container = new VBox(l_settings, hbox_width, hbox_height, hbox_startEnergy, hbox_moveEnergyCost, hbox_plantEnergy, hbox_jungleRatio, b_openSimulator);
@@ -100,28 +104,38 @@ public class App extends Application {
         newWindow.setTitle("Simulation");
 
         Button b_start = new Button();
+        Button b_stop = new Button();
+
         b_start.setText("Start");
         b_start.setMinSize(100, 30);
         b_start.setOnAction(actionEvent ->  {
             this.isRunning = true;
             out.println(this.isRunning);
+
+            b_start.setDisable(true);
+            b_stop.setDisable(false);
         });
 
-        Button b_stop = new Button();
         b_stop.setText("Stop");
+        b_stop.setDisable(true);
         b_stop.setMinSize(100, 30);
         b_stop.setOnAction(actionEvent ->  {
             this.isRunning = false;
             out.println(this.isRunning);
+            b_start.setDisable(false);
+            b_stop.setDisable(true);
         });
 
-        VBox vbox_leftPanel = new VBox(b_start, b_stop);
+        HBox hbox_buttonsRow = new HBox(b_start, b_stop);
+
+        VBox vbox_leftPanel = new VBox(hbox_buttonsRow);
         vbox_leftPanel.setStyle("-fx-background-color: #333333;");
         vbox_leftPanel.setMinSize(LEFT_PANEL_SIZE,MAP_SIZE);
 
         GridPane gp_map1 = new GridPane();
         gp_map1.setStyle("-fx-background-color: #CCCCCC;");
         gp_map1.setMinSize(MAP_SIZE,MAP_SIZE);
+        generateObjects(gp_map1, worldMap1);
 
         GridPane gp_map2 = new GridPane();
         gp_map1.setStyle("-fx-background-color: #999999;");
@@ -136,5 +150,14 @@ public class App extends Application {
     @Override
     public void stop(){
         System.out.println("//Stage is closing//");
+    }
+
+    private void generateObjects(GridPane gp, WorldMap wp){
+        int cellSize = MAP_SIZE / width;
+
+        for(Grass grass: wp.getGrasses()){
+            Label guiElementBox = new GuiElementBox(grass, cellSize).getLabel();
+            gp.add(guiElementBox, grass.getPosition().x, grass.getPosition().y);
+        }
     }
 }
