@@ -11,16 +11,16 @@ public class Animal implements IMapElement {
     Vector2D position;
     int[] genes = new int[32];
 
-    private IWorldMap map;
+    private AbstractWorldMap map;
 
 //    Constructor
-    public Animal(int initialEnergy, Vector2D position, IWorldMap map){
+
+    public Animal(int initialEnergy, Vector2D position, AbstractWorldMap map){
         this.energy = initialEnergy;
         this.orientation = randomFromRange(0, 7);
         generateGenes();
         this.position = position;
         this.map = map;
-        out.println(this.genes);
     }
 
 //    Private methods
@@ -32,7 +32,8 @@ public class Animal implements IMapElement {
     }
 
     private void changeOrientation(){
-        this.orientation = this.genes[randomFromRange(0, 31)];
+        int newOrientation = this.genes[randomFromRange(0, 31)];
+        this.orientation = (this.orientation + newOrientation) % 8;
     }
 
     private int randomFromRange(int min, int max){
@@ -44,18 +45,40 @@ public class Animal implements IMapElement {
 //    Public methods
     public void move(){
         changeOrientation();
-        out.println(this.position);
         Vector2D shift = switch (this.orientation){
-            case 0 -> new Vector2D(0, 1);
-            case 1 -> new Vector2D(0, 1);
-            case 2 -> new Vector2D(0, 1);
-            case 3 -> new Vector2D(0, 1);
+            case 0 -> new Vector2D(0, -1);
+            case 1 -> new Vector2D(1, -1);
+            case 2 -> new Vector2D(1, 0);
+            case 3 -> new Vector2D(1, 1);
             case 4 -> new Vector2D(0, 1);
-            case 5 -> new Vector2D(0, 1);
-            case 6 -> new Vector2D(0, 1);
-            case 7 -> new Vector2D(0, 1);
+            case 5 -> new Vector2D(-1, 1);
+            case 6 -> new Vector2D(-1, 0);
+            case 7 -> new Vector2D(-1, -1);
             default -> throw new IllegalStateException("Unexpected value: " + this.orientation);
         };
+
+        Vector2D oldPosition = this.position;
+        Vector2D newPosition = this.position.add(shift);
+
+        if(newPosition.follows(this.map.getCornerBottomRight()) && newPosition.precedes(this.map.getCornerTopLeft())) {
+            this.position = newPosition;
+            this.map.positionChanged(oldPosition, this.position);
+            out.println("a");
+            out.println(this.position);
+        } else {
+            if(!map.isBordered()){
+                if(newPosition.x < 0) newPosition.x = map.getWidth()-1;
+                else if(newPosition.x > map.getWidth()-1) newPosition.x = 0;
+
+                if(newPosition.y < 0) newPosition.y = map.getHeight()-1;
+                else if(newPosition.y > map.getHeight()-1) newPosition.y = 0;
+
+                this.position = newPosition;
+                this.map.positionChanged(oldPosition, this.position);
+                out.println("b");
+                out.println(this.position);
+            }
+        }
     }
 
     public int getEnergy() {

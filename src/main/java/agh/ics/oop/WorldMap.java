@@ -13,8 +13,8 @@ public class WorldMap extends AbstractWorldMap {
     private int height;
     private int plantEnergy;
     private float jungleRatio;
-    private Vector2D cornerTopRight;
-    private Vector2D cornerBottomLeft;
+    private Vector2D cornerBottomRight;
+    private Vector2D cornerTopLeft;
 
     private int jungleWidth;
     private int jungleHeight;
@@ -23,13 +23,14 @@ public class WorldMap extends AbstractWorldMap {
     private ArrayList<Vector2D> steppeGrass = new ArrayList<>();
 
 //    Constructors
-    public WorldMap(int width, int height, int plantEnergy, float jungleRatio){
+    public WorldMap(int width, int height, int plantEnergy, float jungleRatio, boolean borderedMode){
         this.width = width;
         this.height = height;
         this.plantEnergy = plantEnergy;
         this.jungleRatio = jungleRatio;
-        this.cornerTopRight = new Vector2D(width,height);
-        this.cornerBottomLeft = new Vector2D(0,0);
+        this.borderedMode = borderedMode;
+        this.cornerBottomRight = new Vector2D(width,height);
+        this.cornerTopLeft = new Vector2D(0,0);
 
         this.jungleWidth = (int) (width * this.jungleRatio);
         this.jungleHeight = (int) (height * this.jungleRatio);
@@ -90,5 +91,52 @@ public class WorldMap extends AbstractWorldMap {
 //    Public methods
     public HashMap<Vector2D, ArrayList<IMapElement>> getObjects(){
         return this.mapObjects;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
+    //    Inherited methods
+    @Override
+    public void positionChanged(Vector2D oldPosition, Vector2D newPosition) {
+        ArrayList<IMapElement> objects = this.mapObjects.get(oldPosition);
+
+        int index = -1;
+        for(int i=0; i < objects.size(); i++){
+            if (objects.get(i).getPosition().isEqual(newPosition)) index = i;
+        }
+        if(index == -1) throw new IllegalArgumentException("Object didn't find in arraylist");
+
+        IMapElement animal = objects.get(index);
+        objects.remove(index);
+
+        this.mapObjects.remove(oldPosition);
+        this.mapObjects.put(oldPosition, objects);
+
+        ArrayList<IMapElement> objectsInNew;
+        if(this.mapObjects.get(newPosition) == null) objectsInNew = new ArrayList<>();
+        else objectsInNew = this.mapObjects.get(newPosition);
+
+        objectsInNew.add(animal);
+        this.mapObjects.remove(oldPosition);
+        this.mapObjects.put(newPosition, objectsInNew);
+
+    }
+
+    @Override
+    public Vector2D getCornerBottomRight() {
+        return cornerBottomRight;
+    }
+
+    @Override
+    public Vector2D getCornerTopLeft() {
+        return cornerTopLeft;
     }
 }

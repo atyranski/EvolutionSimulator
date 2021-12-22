@@ -18,9 +18,11 @@ import javafx.stage.Stage;
 import static java.lang.System.out;
 
 public class App extends Application {
-    final private int INITIAL_ENERGY = 20;
+    final private int INITIAL_ENERGY = 40;
     final private int MAP_SIZE = 600;
     final private int LEFT_PANEL_SIZE = 200;
+    final private int TITLE_BAR_HEIGHT = 46;
+
 
     private int width = 100;
     private int height = 100;
@@ -28,10 +30,14 @@ public class App extends Application {
     private int moveEnergyCost = 2;
     private int plantEnergy = 10;
     private float jungleRatio = 0.5f;
+    private float mapRatio = width / height;
 
     private boolean isRunning = false;
 
     private WorldMap worldMap1;
+
+    private GridPane gp_map1;
+    private GridPane gp_map2;
 
     private SimulationEngine engine1;
 
@@ -47,6 +53,7 @@ public class App extends Application {
         Platform.runLater(() -> {
             primaryStage.setTitle("Evolution Simulator");
             primaryStage.getIcons().add(new Image("windowIcon.png"));
+//            primaryStage.setResizable(false);
 
             Label l_settings = new Label("Settings");
             l_settings.setFont(Font.font("Verdana", 25));
@@ -97,11 +104,13 @@ public class App extends Application {
                 moveEnergyCost = Integer.parseInt(tf_moveEnergyCost.getText());
                 plantEnergy = Integer.parseInt(tf_plantEnergy.getText());
                 jungleRatio = Float.parseFloat(tf_jungleRatio.getText());
+                mapRatio = width / height;
 
-                this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio);
+                this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, false);
 
                 // tymczaswowo - potem bedzie generator pozycji zwierząt
-                Vector2D[] positions = new Vector2D[]{ new Vector2D(1,1), new Vector2D(0,0), new Vector2D(width-1,height-1)};
+//                Vector2D[] positions = new Vector2D[]{ new Vector2D(1,1), new Vector2D(0,0), new Vector2D(width-1,height-1)};
+                Vector2D[] positions = new Vector2D[]{ new Vector2D(0,0), new Vector2D(10,10), new Vector2D(width,height)};
                 this.engine1 = new SimulationEngine(this.worldMap1, positions, INITIAL_ENERGY);
                 this.engine1.addObserver(this);
 
@@ -118,7 +127,7 @@ public class App extends Application {
             container.setMargin(l_settings, new Insets(0, 0, 10, 0));
             container.setMargin(b_openSimulator, new Insets(10, 0, 10, 0));
 
-            Scene scene = new Scene(container, 400, 462);
+            Scene scene = new Scene(container, 400, 470);
 
             primaryStage.setScene(scene);
             primaryStage.show();
@@ -134,12 +143,14 @@ public class App extends Application {
         Stage newWindow = new Stage();
         newWindow.setTitle("Simulation");
         newWindow.getIcons().add(new Image("windowIcon.png"));
+//        newWindow.setResizable(false);
 
         Button b_start = new Button();
         Button b_stop = new Button();
 
         b_start.setText("Start");
         b_start.setMinSize(100, 30);
+        b_stop.setMaxSize(100, 30);
         b_start.setOnAction(actionEvent ->  {
             this.isRunning = true;
             out.println(this.isRunning);
@@ -152,6 +163,7 @@ public class App extends Application {
         b_stop.setText("Stop");
         b_stop.setDisable(true);
         b_stop.setMinSize(100, 30);
+        b_stop.setMaxSize(100, 30);
         b_stop.setOnAction(actionEvent ->  {
             this.isRunning = false;
             out.println(this.isRunning);
@@ -166,21 +178,26 @@ public class App extends Application {
         VBox vbox_leftPanel = new VBox(hbox_buttonsRow);
         vbox_leftPanel.setMinSize(LEFT_PANEL_SIZE,MAP_SIZE);
 
-        GridPane gp_map1 = new GridPane();
-        gp_map1.setStyle("-fx-background-color: #C2A86F;");
-        gp_map1.setMinSize(MAP_SIZE,MAP_SIZE);
+        gp_map1 = new GridPane();
+        gp_map1.setStyle("-fx-background-color: blue;");
+        gp_map1.setMinSize(MAP_SIZE + TITLE_BAR_HEIGHT,MAP_SIZE + TITLE_BAR_HEIGHT);
+        gp_map1.setMaxSize(MAP_SIZE + TITLE_BAR_HEIGHT,MAP_SIZE + TITLE_BAR_HEIGHT);
         generateBoundaries(gp_map1);
         generateObjects(gp_map1, worldMap1);
 
-        GridPane gp_map2 = new GridPane();
+        gp_map2 = new GridPane();
         gp_map2.setStyle("-fx-background-color: #C2A86F;");
-        gp_map2.setMinSize(MAP_SIZE,MAP_SIZE);
+        generateBoundaries(gp_map2);
 
         HBox container = new HBox(vbox_leftPanel, gp_map1, gp_map2);
         container.setStyle("-fx-background-color: #333333;");
         container.setMargin(gp_map2, new Insets(0, 0, 0, 2));
 
-        newWindow.setScene(new Scene(container, LEFT_PANEL_SIZE + 2 * MAP_SIZE + 2, MAP_SIZE));
+
+
+//        tu coś nie gra z rozmiarami map - są za małe
+        Scene newScene = new Scene(container, LEFT_PANEL_SIZE + 2 * MAP_SIZE, (MAP_SIZE + TITLE_BAR_HEIGHT) * mapRatio);
+        newWindow.setScene(newScene);
         newWindow.show();
         newWindow.setOnCloseRequest(e -> {
             engine1.setIsOpened(false);
@@ -214,7 +231,7 @@ public class App extends Application {
                 else if(obj.getEnergy() > 0) label.setStyle("-fx-background-color: #8B66A8;");
             }
 
-            gp.add(label, key.x, key.y);
+            gp.add(label, key.x + 1, key.y + 1);
         }
 
     }
@@ -222,22 +239,37 @@ public class App extends Application {
     private void generateBoundaries(GridPane gp){
         int cellSize = MAP_SIZE / width;
 
-        for (int i=0; i<width; i++){
-            Label boundary = new Label("");
-            boundary.setMinSize(cellSize, 1);
-            boundary.setMaxSize(cellSize, 1);
+        Label boundary;
+        boundary = new Label("");
+        boundary.setMinSize(0, 0);
+        boundary.setMaxSize(0, 0);
+        boundary.setStyle("-fx-background-color: red;");
+        gp.add(boundary, 0, 0);
+
+        int sum = 0;
+        for (int i=1; i<width+1; i++){
+            boundary = new Label("");
+            sum += cellSize;
+            boundary.setMinSize(cellSize, 0);
+            boundary.setMaxSize(cellSize, 0);
+            boundary.setStyle("-fx-background-color: red;");
             gp.add(boundary, i, 0);
         }
 
-        for (int i=1; i<height; i++){
-            Label boundary = new Label("");
-            boundary.setMinSize(1, cellSize);
-            boundary.setMaxSize(1, cellSize);
+        for (int i=1; i<height+1; i++){
+            boundary = new Label("");
+            boundary.setMinSize(0, cellSize);
+            boundary.setMaxSize(0, cellSize);
+            boundary.setStyle("-fx-background-color: red;");
             gp.add(boundary, 0, i);
         }
     }
 
     public void update(){
-
+        Platform.runLater(() -> {
+            gp_map1.getChildren().clear();
+            generateBoundaries(gp_map1);
+            generateObjects(gp_map1, worldMap1);
+        });
     }
 }

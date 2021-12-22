@@ -3,23 +3,22 @@ package agh.ics.oop;
 import agh.ics.oop.gui.App;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.System.out;
 
 public class SimulationEngine implements IEngine, Runnable {
-    private final int MOVE_DELAY = 1000;
+    private final int MOVE_DELAY = 500;
     private boolean isRunning = false;
     private boolean isOpened = true;
 
     private int INITIAL_ENERGY;
     private List<Animal> animals = new ArrayList<>();
 
-    private IWorldMap map;
+    private AbstractWorldMap map;
     private App application;
 
-    public SimulationEngine(IWorldMap map, Vector2D[] initialPositions, int INITIAL_ENERGY){
+    public SimulationEngine(AbstractWorldMap map, Vector2D[] initialPositions, int INITIAL_ENERGY){
         this.map = map;
         this.INITIAL_ENERGY = INITIAL_ENERGY;
 
@@ -34,12 +33,13 @@ public class SimulationEngine implements IEngine, Runnable {
     public void run() {
         while (this.isOpened) {
             if (this.isRunning) {
-                out.println("siemano");
+//                out.println("siemano");
                 for(Animal animal: animals){
                     animal.move();
-                    application.update();
                 }
             }
+
+            application.update();
 
             try {
                 Thread.sleep(MOVE_DELAY);
