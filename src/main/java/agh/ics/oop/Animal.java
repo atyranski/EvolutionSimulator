@@ -6,21 +6,63 @@ import static java.lang.System.out;
 
 public class Animal implements IMapElement {
 //    Attributes
-    int energy;
-    int orientation;
-    Vector2D position;
-    int[] genes = new int[32];
+    private int id;
+    private int energy;
+    private int orientation;
+    private int maxEnergy;
+    private int moveEnergyCost;
+    private Vector2D position;
+    private int[] genes = new int[32];
 
     private AbstractWorldMap map;
 
 //    Constructor
-
-    public Animal(int initialEnergy, Vector2D position, AbstractWorldMap map){
+    public Animal(int id, int initialEnergy, int moveEnergyCost, Vector2D position, AbstractWorldMap map){
+        this.id = id;
         this.energy = initialEnergy;
         this.orientation = randomFromRange(0, 7);
-        generateGenes();
+        this.maxEnergy = initialEnergy;
+        this.moveEnergyCost = moveEnergyCost;
         this.position = position;
+        generateGenes();
+
         this.map = map;
+    }
+
+    public Animal(int id, int initialEnergy, int moveEnergyCost, Vector2D position, AbstractWorldMap map, int[] genes, int energy){
+        this.id = id;
+        this.energy = energy;
+        this.orientation = randomFromRange(0, 7);
+        this.maxEnergy = initialEnergy;
+        this.moveEnergyCost = moveEnergyCost;
+        this.position = position;
+        this.genes = genes;
+
+        this.map = map;
+    }
+
+//    Static methods
+    public static int[] combineGenes(Animal first, Animal second){
+        int[] genes = new int[32];
+        int[] firstGenes = first.getGenes();
+        int[] secondGenes = second.getGenes();
+
+        boolean randomSide = Math.random() < 0.5;
+        int contribution = first.getEnergy() / (first.getEnergy() + second.getEnergy());
+
+        if(randomSide){
+            for(int i=0; i<contribution; i++) genes[i] = firstGenes[i];
+            for(int i=contribution; i<32; i++) genes[i] = secondGenes[i];
+        } else {
+            for(int i=0; i<contribution; i++) genes[i] = secondGenes[i];
+            for(int i=contribution; i<32; i++) genes[i] = firstGenes[i];
+        }
+
+        return genes;
+    }
+
+    public static int combineEnergy(Animal first, Animal second){
+        return (int) (first.getEnergy() * 0.25 + second.getEnergy() * 0.25);
     }
 
 //    Private methods
@@ -31,9 +73,9 @@ public class Animal implements IMapElement {
         Arrays.sort(genes);
     }
 
-    private void changeOrientation(){
-        int newOrientation = this.genes[randomFromRange(0, 31)];
-        this.orientation = (this.orientation + newOrientation) % 8;
+    private int changeOrientation(){
+        return this.genes[randomFromRange(0, 31)];
+//        this.orientation = (this.orientation + newOrientation) % 8;
     }
 
     private int randomFromRange(int min, int max){
@@ -44,7 +86,14 @@ public class Animal implements IMapElement {
 
 //    Public methods
     public void move(){
-        changeOrientation();
+//        out.println(this.id);
+        int newOrientation = changeOrientation();
+        if(newOrientation != 0 && newOrientation != 4) {
+            this.orientation = (this.orientation + newOrientation) % 8;
+            return;
+        }
+
+        int isForward = newOrientation == 0 ? 1 : -1;
         Vector2D shift = switch (this.orientation){
             case 0 -> new Vector2D(0, -1);
             case 1 -> new Vector2D(1, -1);
@@ -57,14 +106,14 @@ public class Animal implements IMapElement {
             default -> throw new IllegalStateException("Unexpected value: " + this.orientation);
         };
 
+        if(isForward == -1) shift = shift.opposite();
+
         Vector2D oldPosition = this.position;
         Vector2D newPosition = this.position.add(shift);
 
         if(newPosition.follows(this.map.getCornerBottomRight()) && newPosition.precedes(this.map.getCornerTopLeft())) {
             this.position = newPosition;
-            this.map.positionChanged(oldPosition, this.position);
-            out.println("a");
-            out.println(this.position);
+            this.map.positionChanged(oldPosition, this.position, this.id);
         } else {
             if(!map.isBordered()){
                 if(newPosition.x < 0) newPosition.x = map.getWidth()-1;
@@ -74,28 +123,46 @@ public class Animal implements IMapElement {
                 else if(newPosition.y > map.getHeight()-1) newPosition.y = 0;
 
                 this.position = newPosition;
-                this.map.positionChanged(oldPosition, this.position);
-                out.println("b");
-                out.println(this.position);
+                this.map.positionChanged(oldPosition, this.position, this.id);
             }
         }
+        this.energy -= this.moveEnergyCost;
+        if(this.energy <= 0) map.addToRemove(this);
     }
 
-    public int getEnergy() {
-        return energy;
+    public void eat(int energy){
+        this.energy = Math.min(this.energy + energy, this.maxEnergy);
+    }
+
+    public void reproductionLost(){
+        this.energy = (int) (this.energy * 0.75);
     }
 
     public int getOrientation() {
         return orientation;
     }
 
+    public int getMaxEnergy() {
+        return maxEnergy;
+    }
+
     public int[] getGenes() {
         return genes;
     }
 
-//    Interface methods
+    public int getId() {
+        return id;
+    }
+
+    //    Interface methods
     @Override
     public Vector2D getPosition() {
         return this.position;
     }
+
+    @Override
+    public int getEnergy() {
+        return this.energy;
+    }
+
 }

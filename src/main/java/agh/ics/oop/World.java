@@ -22,7 +22,6 @@ public class World {
 //        Vector2D p1 = new Vector2D(-1,0);
 //        out.println(p1.precedes(new Vector2D(0,0)));
 
-
         try {
             Application.launch(App.class, args);
         } catch(Exception ex) {

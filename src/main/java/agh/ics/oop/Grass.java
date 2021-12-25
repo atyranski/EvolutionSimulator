@@ -17,4 +17,9 @@ public class Grass implements IMapElement{
     public Vector2D getPosition() {
         return position;
     }
+
+    @Override
+    public int getEnergy() {
+        return this.plantEnergy;
+    }
 }

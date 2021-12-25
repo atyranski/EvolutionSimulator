@@ -5,6 +5,25 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
+
+    class CustomTuple{
+        Animal firstParent;
+        Animal secondParent;
+
+        public CustomTuple(Animal firstParent, Animal secondParent){
+            this.firstParent = firstParent;
+            this.secondParent = secondParent;
+        }
+
+        public Animal getFirstParent() {
+            return firstParent;
+        }
+
+        public Animal getSecondParent() {
+            return secondParent;
+        }
+    }
+
     protected boolean borderedMode;
     protected HashMap<Vector2D, ArrayList<IMapElement>> mapObjects = new HashMap<>();
 
@@ -28,6 +47,20 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
         return 0;
     }
 
+    public void feedAnimals(){}
+
+    public void addToRemove(Animal animal){
+
+    }
+
+    public void removeDeadAnimals(){}
+
+    public void generateNewPlants(){}
+
+    public ArrayList<CustomTuple> animalReproduction(){
+        return new ArrayList<>();
+    }
+
     //MUSZE - BORDERY
     @Override
     public boolean canMoveTo(Vector2D position) {
@@ -44,8 +77,8 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
 //            System.out.println("add to existing");
             ArrayList<IMapElement> list = mapObjects.get(animal.getPosition());
             list.add(animal);
-            mapObjects.remove(animal.getPosition());
-            mapObjects.put(animal.getPosition(), list);
+//            mapObjects.remove(animal.getPosition());
+//            mapObjects.put(animal.getPosition(), list);
         }
         return true;
     }

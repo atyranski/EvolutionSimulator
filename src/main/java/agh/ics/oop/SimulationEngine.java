@@ -1,6 +1,7 @@
 package agh.ics.oop;
 
 import agh.ics.oop.gui.App;
+import javafx.scene.layout.GridPane;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,24 +9,31 @@ import java.util.List;
 import static java.lang.System.out;
 
 public class SimulationEngine implements IEngine, Runnable {
-    private final int MOVE_DELAY = 500;
+    private final int MOVE_DELAY = 200;
     private boolean isRunning = false;
     private boolean isOpened = true;
+    private int id = 0;
+    private int day = 0;
 
-    private int INITIAL_ENERGY;
+    private int initialEnergy;
+    private int moveEnergyCost;
     private List<Animal> animals = new ArrayList<>();
 
     private AbstractWorldMap map;
     private App application;
+    private int mapNumber;
 
-    public SimulationEngine(AbstractWorldMap map, Vector2D[] initialPositions, int INITIAL_ENERGY){
+    public SimulationEngine(AbstractWorldMap map, Vector2D[] initialPositions, int initialEnergy, int moveEnergyCost, int mapNumber){
         this.map = map;
-        this.INITIAL_ENERGY = INITIAL_ENERGY;
+        this.initialEnergy = initialEnergy;
+        this.moveEnergyCost = moveEnergyCost;
+        this.mapNumber = mapNumber;
 
         for(Vector2D position: initialPositions){
-            Animal animal = new Animal(INITIAL_ENERGY, position, map);
+            Animal animal = new Animal(id, initialEnergy, moveEnergyCost, position, map);
             map.place(animal);
             animals.add(animal);
+            this.id += 1;
         }
     }
 
@@ -33,13 +41,18 @@ public class SimulationEngine implements IEngine, Runnable {
     public void run() {
         while (this.isOpened) {
             if (this.isRunning) {
-//                out.println("siemano");
-                for(Animal animal: animals){
-                    animal.move();
-                }
+                out.printf("----NEXT DAY #%d----\n", day);
+                map.removeDeadAnimals();
+                this.moveAnimals();
+                map.feedAnimals();
+                this.animalReproduction();
+                map.generateNewPlants();
+
+                out.printf("Animals: %d\n\n", animals.size());
+                day += 1;
             }
 
-            application.update();
+            application.update(this.mapNumber);
 
             try {
                 Thread.sleep(MOVE_DELAY);
@@ -47,6 +60,34 @@ public class SimulationEngine implements IEngine, Runnable {
                 e.printStackTrace();
             }
 
+        }
+    }
+
+    private void moveAnimals(){
+        ArrayList<Animal> aliveAnimals = new ArrayList<>();
+        for(Animal animal : animals){
+            if(animal.getEnergy() > 0){
+                aliveAnimals.add(animal);
+                animal.move();
+            }
+        }
+        animals = aliveAnimals;
+    }
+
+    private void animalReproduction(){
+        ArrayList<AbstractWorldMap.CustomTuple> tuples = map.animalReproduction();
+        for(AbstractWorldMap.CustomTuple tuple: tuples){
+            Animal animal = new Animal(id,
+                    initialEnergy,
+                    moveEnergyCost,
+                    tuple.getFirstParent().getPosition(),
+                    map,
+                    Animal.combineGenes(tuple.getFirstParent(), tuple.getSecondParent()),
+                    Animal.combineEnergy(tuple.getFirstParent(), tuple.getSecondParent())
+            );
+            map.place(animal);
+            animals.add(animal);
+            id += 1;
         }
     }
 
