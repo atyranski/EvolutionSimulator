@@ -5,12 +5,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -63,6 +62,16 @@ public class App extends Application {
             Label l_settings = new Label("Settings");
             l_settings.setFont(Font.font("Verdana", 25));
 
+            Label l_width = new Label("Map width: ");
+            Label l_height = new Label("Map height: ");
+            Label l_startEnergy = new Label("Energy on start: ");
+            Label l_moveEnergyCost = new Label("Move energy cost: ");
+            Label l_plantEnergy = new Label("Energy from plant: ");
+            Label l_jungleRatio = new Label("Jungle ratio: ");
+            Label l_startAnimalAmount = new Label("Animals on start: ");
+            Label l_evolutionMode_1 = new Label("Boundless map: ");
+            Label l_evolutionMode_2 = new Label("Limited map: ");
+
             TextField tf_width = new TextField();
             TextField tf_height = new TextField();
             TextField tf_startEnergy = new TextField();
@@ -79,13 +88,33 @@ public class App extends Application {
             tf_jungleRatio.setText(Float.toString(jungleRatio));
             tf_startAnimalAmount.setText(Integer.toString(startAnimalAmount));
 
-            Label l_width = new Label("Map width: ");
-            Label l_height = new Label("Map height: ");
-            Label l_startEnergy = new Label("Energy on start: ");
-            Label l_moveEnergyCost = new Label("Move energy cost: ");
-            Label l_plantEnergy = new Label("Energy from plant: ");
-            Label l_jungleRatio = new Label("Jungle ratio: ");
-            Label l_startAnimalAmount = new Label("Animals on start: ");
+//            /Radio Buttons objects>
+            RadioButton rb_normalMode1 = new RadioButton("Normal");
+            RadioButton rb_magicMode1 = new RadioButton("Magic");
+            RadioButton rb_normalMode2 = new RadioButton("Normal");
+            RadioButton rb_magicMode2 = new RadioButton("Magic");
+
+            rb_normalMode1.setSelected(true);
+            rb_normalMode2.setSelected(true);
+
+            ToggleGroup tg_group1 = new ToggleGroup();
+            ToggleGroup tg_group2 = new ToggleGroup();
+
+            rb_normalMode1.setToggleGroup(tg_group1);
+            rb_magicMode1.setToggleGroup(tg_group1);
+            rb_normalMode2.setToggleGroup(tg_group2);
+            rb_magicMode2.setToggleGroup(tg_group2);
+
+            HBox hbox_rb_1 = new HBox(rb_normalMode1, rb_magicMode1);
+            HBox hbox_rb_2 = new HBox(rb_normalMode2, rb_magicMode2);
+
+            VBox vbox_group_1 = new VBox(l_evolutionMode_1, hbox_rb_1);
+            VBox vbox_group_2 = new VBox(l_evolutionMode_2, hbox_rb_2);
+
+            HBox hbox_evolutionMode = new HBox(vbox_group_1, vbox_group_2);
+            hbox_evolutionMode.setHgrow(vbox_group_1, Priority.ALWAYS);
+            hbox_evolutionMode.setHgrow(vbox_group_2, Priority.ALWAYS);
+//            <Radio Buttons objects
 
             VBox vbox_width = new VBox(l_width, tf_width);
             VBox vbox_height = new VBox(l_height, tf_height);
@@ -102,6 +131,10 @@ public class App extends Application {
             vbox_plantEnergy.setMargin(tf_plantEnergy, new Insets(5, 0, 10, 0));
             vbox_jungleRatio.setMargin(tf_jungleRatio, new Insets(5, 0, 10, 0));
             vbox_startAnimalAmount.setMargin(tf_startAnimalAmount, new Insets(5, 0, 10, 0));
+            vbox_group_1.setMargin(l_evolutionMode_1, new Insets(5, 0, 5, 0));
+            vbox_group_2.setMargin(l_evolutionMode_2, new Insets(5, 0, 5, 0));
+            hbox_rb_1.setMargin(rb_normalMode1, new Insets(0, 10, 0, 0));
+            hbox_rb_2.setMargin(rb_normalMode2, new Insets(0, 10, 0, 0));
 
             Button b_openSimulator = new Button();
             b_openSimulator.setText("Open simulator");
@@ -141,12 +174,16 @@ public class App extends Application {
                 });
             });
 
-            VBox container = new VBox(l_settings, vbox_width, vbox_height, vbox_startEnergy, vbox_moveEnergyCost, vbox_plantEnergy, vbox_jungleRatio, vbox_startAnimalAmount, b_openSimulator);
+            VBox container = new VBox(l_settings, vbox_width, vbox_height,
+                    vbox_startEnergy, vbox_moveEnergyCost, vbox_plantEnergy,
+                    vbox_jungleRatio, vbox_startAnimalAmount, hbox_evolutionMode,
+                    b_openSimulator
+            );
             container.setPadding(new Insets(10, 20, 10, 20));
             container.setMargin(l_settings, new Insets(0, 0, 10, 0));
-            container.setMargin(b_openSimulator, new Insets(10, 0, 10, 0));
+            container.setMargin(b_openSimulator, new Insets(20, 0, 10, 0));
 
-            Scene scene = new Scene(container, 400, 520);
+            Scene scene = new Scene(container, 400, 580);
 
             primaryStage.setScene(scene);
             primaryStage.show();
