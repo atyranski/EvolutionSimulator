@@ -5,6 +5,10 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -22,6 +26,8 @@ import static java.lang.System.out;
 public class App extends Application {
     final private int MAP_SIZE = 500;
     final private int LEFT_PANEL_SIZE = 200;
+    final private int LINECHART_HEIGHT = 400;
+    final private int CHART_RESOLUTION = 51;
 
     private int width = 50;
     private int height = 50;
@@ -46,6 +52,9 @@ public class App extends Application {
 
     private Thread thread1;
     private Thread thread2;
+
+    private LineChart<String, Number> lineChart1;
+    private LineChart<String, Number> lineChart2;
 
     @Override
     public void init() throws Exception {
@@ -151,8 +160,8 @@ public class App extends Application {
                 startAnimalAmount = Integer.parseInt(tf_startAnimalAmount.getText());
                 mapRatio = width / height;
 
-                this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, false);
-                this.worldMap2 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, true);
+                this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, false, this.moveEnergyCost);
+                this.worldMap2 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, true, this.moveEnergyCost);
 
                 Vector2D[] positions1 = this.generateAnimalPositions();
                 Vector2D[] positions2 = this.generateAnimalPositions();
@@ -250,11 +259,59 @@ public class App extends Application {
         generateBoundaries(gp_map2);
         generateObjects(gp_map2, worldMap2);
 
-        HBox container = new HBox(vbox_leftPanel, gp_map1, gp_map2);
-        container.setStyle("-fx-background-color: #333333;");
-        container.setMargin(gp_map2, new Insets(0, 0, 0, 2));
+//        Chart map 1
+        CategoryAxis xAxis1 = new CategoryAxis();
+        NumberAxis yAxis1 = new NumberAxis();
+        xAxis1.setAnimated(false);
+        yAxis1.setAnimated(false);
 
-        Scene newScene = new Scene(container, LEFT_PANEL_SIZE + 2 * (MAP_SIZE + cellSize), MAP_SIZE * mapRatio + cellSize);
+        lineChart1 = new LineChart<>(xAxis1, yAxis1);
+        lineChart1.setAnimated(false);
+        lineChart1.setCreateSymbols(false); //hide dots
+
+        XYChart.Series seriesAnimal1 = new XYChart.Series();
+        XYChart.Series seriesGrass1 = new XYChart.Series();
+        XYChart.Series seriesAvgEnergy1 = new XYChart.Series();
+        XYChart.Series seriesAvgLifespan1 = new XYChart.Series();
+
+        seriesAnimal1.setName("Animals");
+        seriesGrass1.setName("Grass");
+        seriesAvgEnergy1.setName("Average Energy");
+        seriesAvgLifespan1.setName("Average Lifespan");
+
+        lineChart1.getData().addAll(seriesAnimal1, seriesGrass1, seriesAvgEnergy1, seriesAvgLifespan1);
+
+//        Chart map 2
+        CategoryAxis xAxis2 = new CategoryAxis();
+        NumberAxis yAxis2 = new NumberAxis();
+        xAxis2.setAnimated(false);
+        yAxis2.setAnimated(false);
+
+        lineChart2 = new LineChart<>(xAxis2, yAxis2);
+        lineChart2.setAnimated(false);
+        lineChart2.setCreateSymbols(false); //hide dots
+
+        XYChart.Series seriesAnimal2 = new XYChart.Series();
+        XYChart.Series seriesGrass2 = new XYChart.Series();
+        XYChart.Series seriesAvgEnergy2 = new XYChart.Series();
+        XYChart.Series seriesAvgLifespan2 = new XYChart.Series();
+
+        seriesAnimal2.setName("Animals");
+        seriesGrass2.setName("Grass");
+        seriesAvgEnergy2.setName("Average Energy");
+        seriesAvgLifespan2.setName("Average Lifespan");
+
+        lineChart2.getData().addAll(seriesAnimal2, seriesGrass2, seriesAvgEnergy2, seriesAvgLifespan2);
+//
+
+        VBox vbox_mapContent1 = new VBox(gp_map1, lineChart1);
+        VBox vbox_mapContent2 = new VBox(gp_map2, lineChart2);
+
+        HBox container = new HBox(vbox_leftPanel, vbox_mapContent1, vbox_mapContent2);
+        container.setStyle("-fx-background-color: #333333;");
+        container.setMargin(vbox_mapContent2, new Insets(0, 0, 0, 2));
+
+        Scene newScene = new Scene(container, LEFT_PANEL_SIZE + 2 * (MAP_SIZE + cellSize), MAP_SIZE * mapRatio + cellSize + LINECHART_HEIGHT);
         newWindow.setScene(newScene);
         newWindow.show();
         newWindow.setOnCloseRequest(e -> {
@@ -324,6 +381,34 @@ public class App extends Application {
         }
     }
 
+    private void generatePlot(int[] data,LineChart<String,Number> lineChart){
+//        0 - day
+//        1 - animalAmount
+//        2 - grassAmount
+//        3 - avgEnergy
+//        4 - avgLifespan
+//        out.printf("%d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4]);
+
+        XYChart.Series seriesAnimal = lineChart.getData().get(0);
+        seriesAnimal.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[1]));
+
+        XYChart.Series seriesGrass = lineChart.getData().get(1);
+        seriesGrass.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[2]));
+
+        XYChart.Series seriesAvgEnergy = lineChart.getData().get(2);
+        seriesAvgEnergy.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[3]));
+
+        XYChart.Series seriesAvgLifespan = lineChart.getData().get(3);
+        seriesAvgLifespan.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[4]));
+
+        if (seriesAnimal.getData().size() > CHART_RESOLUTION){
+            seriesAnimal.getData().remove(0);
+            seriesGrass.getData().remove(0);
+            seriesAvgEnergy.getData().remove(0);
+            seriesAvgLifespan.getData().remove(0);
+        }
+    }
+
     private Vector2D[] generateAnimalPositions(){
         Vector2D[] positions = new Vector2D[this.startAnimalAmount];
 
@@ -347,12 +432,14 @@ public class App extends Application {
                 gp_map1.getChildren().clear();
                 generateBoundaries(gp_map1);
                 generateObjects(gp_map1, worldMap1);
+                this.generatePlot(worldMap1.getStatistics(), lineChart1);
             });
         } else {
             Platform.runLater(() -> {
                 gp_map2.getChildren().clear();
                 generateBoundaries(gp_map2);
                 generateObjects(gp_map2, worldMap2);
+                this.generatePlot(worldMap2.getStatistics(), lineChart2);
             });
         }
 

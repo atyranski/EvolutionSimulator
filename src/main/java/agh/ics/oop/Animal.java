@@ -14,6 +14,8 @@ public class Animal implements IMapElement {
     private Vector2D position;
     private int[] genes = new int[32];
 
+    private int age = 0;
+
     private AbstractWorldMap map;
 
 //    Constructor
@@ -86,6 +88,7 @@ public class Animal implements IMapElement {
 
 //    Public methods
     public void move(){
+        this.age += 1;
 //        out.println(this.id);
         int newOrientation = changeOrientation();
         if(newOrientation != 0 && newOrientation != 4) {
@@ -152,6 +155,10 @@ public class Animal implements IMapElement {
 
     public int getId() {
         return id;
+    }
+
+    public int getAge() {
+        return age;
     }
 
     //    Interface methods

@@ -2,7 +2,6 @@ package agh.ics.oop;
 
 import java.util.*;
 
-import static java.lang.System.in;
 import static java.lang.System.out;
 
 public class WorldMap extends AbstractWorldMap {
@@ -10,12 +9,13 @@ public class WorldMap extends AbstractWorldMap {
     private int width;
     private int height;
     private int plantEnergy;
+    private int movementCost;
     private float jungleRatio;
     private Vector2D cornerBottomRight;
     private Vector2D cornerTopLeft;
 
-    int steppeGrassAmount = 0;
-    int jungleGrassAmount = 0;
+    private int steppeGrassAmount = 0;
+    private int jungleGrassAmount = 0;
 
     private int offsetX;
     private int offsetY;
@@ -26,15 +26,18 @@ public class WorldMap extends AbstractWorldMap {
     private int maxGrassInJungle;
     private int maxGrassInSteppe;
 
+    private int day = 0;
+
     private ArrayList<Vector2D> fieldsToFeed = new ArrayList<>();
     private ArrayList<Vector2D> fieldsToReproduce = new ArrayList<>();
     private ArrayList<Animal> recentDeadAnimal = new ArrayList<>();
 
 //    Constructors
-    public WorldMap(int width, int height, int plantEnergy, float jungleRatio, boolean borderedMode){
+    public WorldMap(int width, int height, int plantEnergy, float jungleRatio, boolean borderedMode, int movementCost){
         this.width = width;
         this.height = height;
         this.plantEnergy = plantEnergy;
+        this.movementCost = movementCost;
         this.jungleRatio = jungleRatio;
         this.borderedMode = borderedMode;
         this.cornerBottomRight = new Vector2D(width,height);
@@ -122,6 +125,24 @@ public class WorldMap extends AbstractWorldMap {
         return this.mapObjects;
     }
 
+    public int[] getStatistics(){
+//        out.printf("[%d, %d, %d, %d, %d, %f]\n",
+//                animalAmount,
+//                this.steppeGrassAmount + this.jungleGrassAmount,
+//                topGenotype, // nie rozumiem
+//                sumEnergy / animalAmount,
+//                deadAnimalAmount == 0 ? 0 : sumLifespan / deadAnimalAmount,
+//                avgChildrenAmount // nie rozumiem
+//        );
+        return new int[]{
+                this.day,
+                animalAmount,
+                this.steppeGrassAmount + this.jungleGrassAmount,
+                sumEnergy / animalAmount,
+                deadAnimalAmount == 0 ? 0 : sumLifespan / deadAnimalAmount,
+        };
+    }
+
 //    Inherited methods
     @Override
     public int getWidth() {
@@ -144,6 +165,10 @@ public class WorldMap extends AbstractWorldMap {
 
             if(objects.size() == 2){
                 Animal animal = (Animal) objects.get(1);
+
+                if(animal.getEnergy() + grass.getEnergy() > animal.getMaxEnergy()) this.sumEnergy += (animal.getMaxEnergy() - animal.getEnergy());
+                else this.sumEnergy += grass.getEnergy();
+
                 animal.eat(grass.getEnergy());
 
             } else {
@@ -160,6 +185,9 @@ public class WorldMap extends AbstractWorldMap {
                 }
 
                 for(int i=0; i<strongest.size(); i++){
+                    if(strongest.get(i).getEnergy() + grass.getEnergy() > strongest.get(i).getMaxEnergy()) this.sumEnergy += (strongest.get(i).getMaxEnergy() - strongest.get(i).getEnergy());
+                    else this.sumEnergy += grass.getEnergy();
+
                     strongest.get(i).eat(grass.getEnergy()/strongest.size());
                 }
 
@@ -180,13 +208,19 @@ public class WorldMap extends AbstractWorldMap {
     }
 
     @Override
-    public void removeDeadAnimals() {
-        super.removeDeadAnimals();
+    public void removeDeadAnimals(int day) {
+        super.removeDeadAnimals(day);
+        this.day = day;
 
         for(Animal animal : recentDeadAnimal){
             if (animal.getEnergy() <= 0) {
-                if(mapObjects.get(animal.getPosition()).size() == 1) mapObjects.remove(animal.getPosition());
-                else{
+                this.animalAmount -= 1;
+                this.deadAnimalAmount += 1;
+                this.sumLifespan += animal.getAge();
+
+                if(mapObjects.get(animal.getPosition()).size() == 1) {
+                    mapObjects.remove(animal.getPosition());
+                } else {
                     ArrayList<IMapElement> objects = mapObjects.get(animal.getPosition());
                     int index = -1;
                     for(int i=0; i<objects.size(); i++){
@@ -199,8 +233,8 @@ public class WorldMap extends AbstractWorldMap {
                     if(index == -1) throw new IllegalArgumentException("Animal not found");
 
                     objects.remove(index);
+                    this.animalAmount -= 1;
                 }
-
             }
         }
         recentDeadAnimal = new ArrayList<>();
@@ -272,6 +306,7 @@ public class WorldMap extends AbstractWorldMap {
         objectsInNew.add(animal);
         this.mapObjects.remove(newPosition);
         this.mapObjects.put(newPosition, objectsInNew);
+        this.sumEnergy -= movementCost;
     }
 
     @Override

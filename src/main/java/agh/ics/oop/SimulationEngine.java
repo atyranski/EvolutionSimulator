@@ -41,18 +41,20 @@ public class SimulationEngine implements IEngine, Runnable {
     public void run() {
         while (this.isOpened) {
             if (this.isRunning) {
-                out.printf("----NEXT DAY #%d----\n", day);
-                map.removeDeadAnimals();
+//                out.printf("----NEXT DAY #%d----\n", day);
+                map.removeDeadAnimals(day);
                 this.moveAnimals();
                 map.feedAnimals();
                 this.animalReproduction();
                 map.generateNewPlants();
 
-                out.printf("Animals: %d\n\n", animals.size());
+//                out.printf("Animals: %d\n\n", animals.size());
                 day += 1;
+
+                application.update(this.mapNumber);
             }
 
-            application.update(this.mapNumber);
+
 
             try {
                 Thread.sleep(MOVE_DELAY);

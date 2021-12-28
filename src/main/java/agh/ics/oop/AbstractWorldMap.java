@@ -27,6 +27,14 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
     protected boolean borderedMode;
     protected HashMap<Vector2D, ArrayList<IMapElement>> mapObjects = new HashMap<>();
 
+    //    Statistics
+    protected int animalAmount = 0;
+    protected int topGenotype = 0;
+    protected int sumEnergy = 0;
+    protected int deadAnimalAmount = 0;
+    protected int sumLifespan = 0;
+    protected float avgChildrenAmount = 0;
+
     public boolean isBordered(){
         return this.borderedMode;
     }
@@ -53,7 +61,7 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
 
     }
 
-    public void removeDeadAnimals(){}
+    public void removeDeadAnimals(int day){}
 
     public void generateNewPlants(){}
 
@@ -71,15 +79,13 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
     @Override
     public boolean place(Animal animal) {
         if(mapObjects.get(animal.getPosition()) == null){
-//            System.out.println("add new");
             mapObjects.put(animal.getPosition(), new ArrayList<>(Arrays.asList(animal)));
         } else {
-//            System.out.println("add to existing");
             ArrayList<IMapElement> list = mapObjects.get(animal.getPosition());
             list.add(animal);
-//            mapObjects.remove(animal.getPosition());
-//            mapObjects.put(animal.getPosition(), list);
         }
+        this.animalAmount += 1;
+        this.sumEnergy += animal.getEnergy();
         return true;
     }
 
