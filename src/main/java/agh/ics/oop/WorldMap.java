@@ -19,7 +19,6 @@ public class WorldMap extends AbstractWorldMap {
 
     private int offsetX;
     private int offsetY;
-    private int shortSide;
 
     private int jungleWidth;
     private int jungleHeight;
@@ -50,7 +49,6 @@ public class WorldMap extends AbstractWorldMap {
 
         this.offsetX = (this.width - this.jungleWidth) / 2;
         this.offsetY = (this.height - this.jungleHeight) / 2;
-        this.shortSide = (int) ((width - (width * jungleRatio)) / 2);
 
         this.generateNewPlants();
     }
@@ -78,19 +76,19 @@ public class WorldMap extends AbstractWorldMap {
                 // druga
                 position = new Vector2D(
                         (int) (0 + (Math.random() * (offsetX - 0))) + (width - offsetX),
-                        (int) (0 + (Math.random() * ((width - offsetY) - 0)))
+                        (int) (0 + (Math.random() * ((height - offsetY) - 0)))
                 );
             } else if (quarter < 0.75){
                 // trzecia
                 position = new Vector2D(
-                        (int) (0 + (Math.random() * ((width - offsetX) - 0))) + shortSide,
-                        (int) (0 + (Math.random() * (offsetY - 0))) + (width - shortSide)
+                        (int) (0 + (Math.random() * ((width - offsetX) - 0))) + offsetX,
+                        (int) (0 + (Math.random() * (offsetY - 0))) + (height - offsetY)
                 );
             } else {
                 // czwarta
                 position = new Vector2D(
                         (int) (0 + (Math.random() * (offsetX - 0))),
-                        (int) (0 + (Math.random() * ((width - offsetY) - 0))) + shortSide
+                        (int) (0 + (Math.random() * ((height - offsetY) - 0))) + offsetY
                 );
             }
 
@@ -138,8 +136,9 @@ public class WorldMap extends AbstractWorldMap {
                 this.day,
                 animalAmount,
                 this.steppeGrassAmount + this.jungleGrassAmount,
-                sumEnergy / animalAmount,
+                animalAmount == 0 ? 0 : sumEnergy / animalAmount,
                 deadAnimalAmount == 0 ? 0 : sumLifespan / deadAnimalAmount,
+                animalAmount == 0 ? 0 : (int) Math.ceil(sumChildrenAmount / animalAmount),
         };
     }
 
@@ -217,6 +216,7 @@ public class WorldMap extends AbstractWorldMap {
                 this.animalAmount -= 1;
                 this.deadAnimalAmount += 1;
                 this.sumLifespan += animal.getAge();
+                this.sumChildrenAmount -= animal.getChildrenAmount();
 
                 if(mapObjects.get(animal.getPosition()).size() == 1) {
                     mapObjects.remove(animal.getPosition());
@@ -239,6 +239,25 @@ public class WorldMap extends AbstractWorldMap {
         }
         recentDeadAnimal = new ArrayList<>();
 
+    }
+
+    @Override
+    public Vector2D[] getFreePositions(int size) {
+        Vector2D[] positions = super.getFreePositions(size);
+        Vector2D position;
+
+        for(int i=0; i<size; i++){
+            while (true){
+                position = new Vector2D(
+                        (int) (Math.random() * width),
+                        (int) (Math.random() * height)
+                );
+                if(!mapObjects.containsKey(position)) break;
+            }
+            positions[i] = position;
+        }
+
+        return positions;
     }
 
     @Override
@@ -267,6 +286,7 @@ public class WorldMap extends AbstractWorldMap {
             possible.get(possible.size()-1).reproductionLost();
             possible.get(possible.size()-2).reproductionLost();
             tuples.add(tuple);
+            this.sumChildrenAmount += 2;
         }
 
         fieldsToReproduce = new ArrayList<>();

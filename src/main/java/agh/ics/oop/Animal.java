@@ -13,6 +13,7 @@ public class Animal implements IMapElement {
     private int moveEnergyCost;
     private Vector2D position;
     private int[] genes = new int[32];
+    private int childrenAmount = 0;
 
     private int age = 0;
 
@@ -138,6 +139,7 @@ public class Animal implements IMapElement {
     }
 
     public void reproductionLost(){
+        this.childrenAmount += 1;
         this.energy = (int) (this.energy * 0.75);
     }
 
@@ -159,6 +161,10 @@ public class Animal implements IMapElement {
 
     public int getAge() {
         return age;
+    }
+
+    public int getChildrenAmount() {
+        return childrenAmount;
     }
 
     //    Interface methods

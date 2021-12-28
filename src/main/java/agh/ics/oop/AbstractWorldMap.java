@@ -33,7 +33,7 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
     protected int sumEnergy = 0;
     protected int deadAnimalAmount = 0;
     protected int sumLifespan = 0;
-    protected float avgChildrenAmount = 0;
+    protected int sumChildrenAmount = 0;
 
     public boolean isBordered(){
         return this.borderedMode;
@@ -64,6 +64,12 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
     public void removeDeadAnimals(int day){}
 
     public void generateNewPlants(){}
+
+    public Vector2D[] getFreePositions(int size){
+        Vector2D[] positions = new Vector2D[size];
+
+        return positions;
+    }
 
     public ArrayList<CustomTuple> animalReproduction(){
         return new ArrayList<>();

@@ -10,10 +10,13 @@ import static java.lang.System.out;
 
 public class SimulationEngine implements IEngine, Runnable {
     private final int MOVE_DELAY = 200;
+    private final int MAGIC_RULE_AMOUNT = 5;
     private boolean isRunning = false;
     private boolean isOpened = true;
     private int id = 0;
     private int day = 0;
+    private boolean isModeNormal;
+    private int magicModeTime = 0;
 
     private int initialEnergy;
     private int moveEnergyCost;
@@ -23,11 +26,12 @@ public class SimulationEngine implements IEngine, Runnable {
     private App application;
     private int mapNumber;
 
-    public SimulationEngine(AbstractWorldMap map, Vector2D[] initialPositions, int initialEnergy, int moveEnergyCost, int mapNumber){
+    public SimulationEngine(AbstractWorldMap map, Vector2D[] initialPositions, int initialEnergy, int moveEnergyCost, int mapNumber, boolean isModeNormal){
         this.map = map;
         this.initialEnergy = initialEnergy;
         this.moveEnergyCost = moveEnergyCost;
         this.mapNumber = mapNumber;
+        this.isModeNormal = isModeNormal;
 
         for(Vector2D position: initialPositions){
             Animal animal = new Animal(id, initialEnergy, moveEnergyCost, position, map);
@@ -42,13 +46,13 @@ public class SimulationEngine implements IEngine, Runnable {
         while (this.isOpened) {
             if (this.isRunning) {
 //                out.printf("----NEXT DAY #%d----\n", day);
+                if(animals.size() == MAGIC_RULE_AMOUNT && !isModeNormal && magicModeTime < 3) this.executeMagicMode();
                 map.removeDeadAnimals(day);
                 this.moveAnimals();
                 map.feedAnimals();
                 this.animalReproduction();
                 map.generateNewPlants();
 
-//                out.printf("Animals: %d\n\n", animals.size());
                 day += 1;
 
                 application.update(this.mapNumber);
@@ -91,6 +95,20 @@ public class SimulationEngine implements IEngine, Runnable {
             animals.add(animal);
             id += 1;
         }
+    }
+
+    private void executeMagicMode(){
+        Vector2D[] positions = map.getFreePositions(MAGIC_RULE_AMOUNT);
+
+        for(int i=0; i<positions.length; i++){
+            Animal animal = new Animal(id, initialEnergy, moveEnergyCost, positions[i], map, animals.get(i).getGenes(), initialEnergy);
+            map.place(animal);
+            animals.add(animal);
+            this.id += 1;
+        }
+
+        application.notifyMagicMode(day, mapNumber);
+        magicModeTime += 1;
     }
 
     @Override

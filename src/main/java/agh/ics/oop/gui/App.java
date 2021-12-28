@@ -15,11 +15,19 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.System.out;
 
@@ -36,8 +44,12 @@ public class App extends Application {
     private int plantEnergy = 20;
     private float jungleRatio = 0.5f;
     private int startAnimalAmount = 50;
-    private float mapRatio = width / height;
     private int cellSize = MAP_SIZE / width;
+
+    private boolean isModeNormal1 = true;
+    private boolean isModeNormal2 = true;
+    private ArrayList<String> magicLogs = new ArrayList<>();
+    private Text t_logs;
 
     private boolean isRunning = false;
 
@@ -55,6 +67,12 @@ public class App extends Application {
 
     private LineChart<String, Number> lineChart1;
     private LineChart<String, Number> lineChart2;
+
+    private String fileName;
+    private File fileMap1;
+    private File fileMap2;
+    private FileOutputStream file1;
+    private FileOutputStream file2;
 
     @Override
     public void init() throws Exception {
@@ -158,19 +176,18 @@ public class App extends Application {
                 plantEnergy = Integer.parseInt(tf_plantEnergy.getText());
                 jungleRatio = Float.parseFloat(tf_jungleRatio.getText());
                 startAnimalAmount = Integer.parseInt(tf_startAnimalAmount.getText());
-                mapRatio = width / height;
+                isModeNormal1 = rb_normalMode1.isSelected();
+                isModeNormal2 = rb_normalMode2.isSelected();
 
                 this.worldMap1 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, false, this.moveEnergyCost);
                 this.worldMap2 = new WorldMap(this.width, this.height, this.plantEnergy, this.jungleRatio, true, this.moveEnergyCost);
 
                 Vector2D[] positions1 = this.generateAnimalPositions();
                 Vector2D[] positions2 = this.generateAnimalPositions();
-//                Vector2D[] positions = new Vector2D[]{ new Vector2D(1,1), new Vector2D(0,0), new Vector2D(width-1,height-1)};
-//                Vector2D[] positions = new Vector2D[]{ new Vector2D(0,0), new Vector2D(3,3), new Vector2D(25,25), new Vector2D(width,height)};
-                this.engine1 = new SimulationEngine(this.worldMap1, positions1, startEnergy, moveEnergyCost, 1);
+                this.engine1 = new SimulationEngine(this.worldMap1, positions1, startEnergy, moveEnergyCost, 1, isModeNormal1);
                 this.engine1.addObserver(this);
 
-                this.engine2 = new SimulationEngine(this.worldMap2, positions2, startEnergy, moveEnergyCost, 2);
+                this.engine2 = new SimulationEngine(this.worldMap2, positions2, startEnergy, moveEnergyCost, 2, isModeNormal2);
                 this.engine2.addObserver(this);
 
                 this.thread1 = new Thread(this.engine1);
@@ -179,7 +196,11 @@ public class App extends Application {
                 thread2.start();
 
                 Platform.runLater(() -> {
-                    openNewWindow();
+                    try {
+                        openNewWindow();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 });
             });
 
@@ -204,11 +225,22 @@ public class App extends Application {
         System.out.println("//Stage is closing//");
     }
 
-    private void openNewWindow(){
+    private void openNewWindow() throws IOException {
         Stage newWindow = new Stage();
         newWindow.setTitle("Simulation");
         newWindow.getIcons().add(new Image("windowIcon.png"));
 //        newWindow.setResizable(false);
+
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+        fileName = "C:/PO/output/" + formatter.format(date);
+        fileMap1 = new File(fileName + "MAP1.csv");
+        fileMap2 = new File(fileName + "MAP2.csv");
+        fileMap1.getParentFile().mkdirs();
+        fileMap1.createNewFile();
+        fileMap2.createNewFile();
+        file1 = new FileOutputStream(fileMap1, false);
+        file2 = new FileOutputStream(fileMap2, false);
 
         Button b_start = new Button();
         Button b_stop = new Button();
@@ -232,7 +264,7 @@ public class App extends Application {
         b_stop.setMaxSize(100, 30);
         b_stop.setOnAction(actionEvent ->  {
             this.isRunning = false;
-            out.println(this.isRunning);
+//            out.println(this.isRunning);
             engine1.setIsRunning(this.isRunning);
             engine2.setIsRunning(this.isRunning);
 
@@ -242,20 +274,33 @@ public class App extends Application {
 
         HBox hbox_buttonsRow = new HBox(b_start, b_stop);
 
-        VBox vbox_leftPanel = new VBox(hbox_buttonsRow);
+        Label l_logs = new Label("Logs: ");
+        t_logs = new Text();
+
+        l_logs.setTextFill(Color.color(1,1,1));
+        t_logs.setText("...");
+        t_logs.setFill(Color.WHITE);
+
+        VBox vbox_leftPanel = new VBox(hbox_buttonsRow, l_logs, t_logs);
         vbox_leftPanel.setMinSize(LEFT_PANEL_SIZE,MAP_SIZE);
+        vbox_leftPanel.setMargin(l_logs, new Insets(10, 10, 10, 10));
+        vbox_leftPanel.setMargin(t_logs, new Insets(0, 10, 0, 10));
+
+        cellSize = Math.round(MAP_SIZE / Math.max(width, height));
+        int realMapWidth = cellSize * width;
+        int realMapHeight = cellSize * height;
 
         gp_map1 = new GridPane();
         gp_map1.setStyle("-fx-background-color: #C2A86F;");
-        gp_map1.setMinSize(MAP_SIZE + cellSize,MAP_SIZE + cellSize);
-        gp_map1.setMaxSize(MAP_SIZE + cellSize,MAP_SIZE + cellSize);
+        gp_map1.setMinSize(realMapWidth + cellSize,realMapHeight + cellSize);
+        gp_map1.setMaxSize(realMapWidth + cellSize,realMapHeight + cellSize);
         generateBoundaries(gp_map1);
         generateObjects(gp_map1, worldMap1);
 
         gp_map2 = new GridPane();
         gp_map2.setStyle("-fx-background-color: #C2A86F;");
-        gp_map2.setMinSize(MAP_SIZE + cellSize,MAP_SIZE + cellSize);
-        gp_map2.setMaxSize(MAP_SIZE + cellSize,MAP_SIZE + cellSize);
+        gp_map2.setMinSize(realMapWidth + cellSize,realMapHeight + cellSize);
+        gp_map2.setMaxSize(realMapWidth + cellSize,realMapHeight + cellSize);
         generateBoundaries(gp_map2);
         generateObjects(gp_map2, worldMap2);
 
@@ -273,13 +318,15 @@ public class App extends Application {
         XYChart.Series seriesGrass1 = new XYChart.Series();
         XYChart.Series seriesAvgEnergy1 = new XYChart.Series();
         XYChart.Series seriesAvgLifespan1 = new XYChart.Series();
+        XYChart.Series seriesAvgChildren1 = new XYChart.Series();
 
         seriesAnimal1.setName("Animals");
         seriesGrass1.setName("Grass");
         seriesAvgEnergy1.setName("Average Energy");
         seriesAvgLifespan1.setName("Average Lifespan");
+        seriesAvgChildren1.setName("Averge Children");
 
-        lineChart1.getData().addAll(seriesAnimal1, seriesGrass1, seriesAvgEnergy1, seriesAvgLifespan1);
+        lineChart1.getData().addAll(seriesAnimal1, seriesGrass1, seriesAvgEnergy1, seriesAvgLifespan1, seriesAvgChildren1);
 
 //        Chart map 2
         CategoryAxis xAxis2 = new CategoryAxis();
@@ -289,19 +336,21 @@ public class App extends Application {
 
         lineChart2 = new LineChart<>(xAxis2, yAxis2);
         lineChart2.setAnimated(false);
-        lineChart2.setCreateSymbols(false); //hide dots
+        lineChart2.setCreateSymbols(false);
 
         XYChart.Series seriesAnimal2 = new XYChart.Series();
         XYChart.Series seriesGrass2 = new XYChart.Series();
         XYChart.Series seriesAvgEnergy2 = new XYChart.Series();
         XYChart.Series seriesAvgLifespan2 = new XYChart.Series();
+        XYChart.Series seriesAvgChildren2 = new XYChart.Series();
 
         seriesAnimal2.setName("Animals");
         seriesGrass2.setName("Grass");
         seriesAvgEnergy2.setName("Average Energy");
         seriesAvgLifespan2.setName("Average Lifespan");
+        seriesAvgChildren2.setName("Averge Children");
 
-        lineChart2.getData().addAll(seriesAnimal2, seriesGrass2, seriesAvgEnergy2, seriesAvgLifespan2);
+        lineChart2.getData().addAll(seriesAnimal2, seriesGrass2, seriesAvgEnergy2, seriesAvgLifespan2, seriesAvgChildren2);
 //
 
         VBox vbox_mapContent1 = new VBox(gp_map1, lineChart1);
@@ -311,7 +360,7 @@ public class App extends Application {
         container.setStyle("-fx-background-color: #333333;");
         container.setMargin(vbox_mapContent2, new Insets(0, 0, 0, 2));
 
-        Scene newScene = new Scene(container, LEFT_PANEL_SIZE + 2 * (MAP_SIZE + cellSize), MAP_SIZE * mapRatio + cellSize + LINECHART_HEIGHT);
+        Scene newScene = new Scene(container, LEFT_PANEL_SIZE + 2 * (realMapWidth + cellSize), realMapHeight + cellSize + LINECHART_HEIGHT);
         newWindow.setScene(newScene);
         newWindow.show();
         newWindow.setOnCloseRequest(e -> {
@@ -321,8 +370,6 @@ public class App extends Application {
     }
 
     private void generateObjects(GridPane gp, WorldMap wp){
-        cellSize = MAP_SIZE / width;
-
         for(Vector2D key: wp.getObjects().keySet()){
 
             IMapElement object = null;
@@ -353,8 +400,6 @@ public class App extends Application {
     }
 
     private void generateBoundaries(GridPane gp){
-        cellSize = MAP_SIZE / width;
-
         Label boundary;
         boundary = new Label("");
         boundary.setMinSize(0, 0);
@@ -381,13 +426,14 @@ public class App extends Application {
         }
     }
 
-    private void generatePlot(int[] data,LineChart<String,Number> lineChart){
+    private void generatePlot(int[] data,LineChart<String,Number> lineChart, int map) throws IOException {
 //        0 - day
 //        1 - animalAmount
 //        2 - grassAmount
 //        3 - avgEnergy
 //        4 - avgLifespan
-//        out.printf("%d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4]);
+//        5 - avgChildren
+//        out.printf("%d, %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4], data[5]);
 
         XYChart.Series seriesAnimal = lineChart.getData().get(0);
         seriesAnimal.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[1]));
@@ -401,26 +447,53 @@ public class App extends Application {
         XYChart.Series seriesAvgLifespan = lineChart.getData().get(3);
         seriesAvgLifespan.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[4]));
 
+        XYChart.Series seriesAvgChildren = lineChart.getData().get(4);
+        seriesAvgChildren.getData().add(new XYChart.Data<>(String.valueOf(data[0]), data[5]));
+
         if (seriesAnimal.getData().size() > CHART_RESOLUTION){
             seriesAnimal.getData().remove(0);
             seriesGrass.getData().remove(0);
             seriesAvgEnergy.getData().remove(0);
             seriesAvgLifespan.getData().remove(0);
+            seriesAvgChildren.getData().remove(0);
         }
+
+        String[] line = new String[]{
+                        String.valueOf(data[0]),
+                        String.valueOf(data[1]),
+                        String.valueOf(data[2]),
+                        String.valueOf(data[3]),
+                        String.valueOf(data[4]),
+                        String.valueOf(data[5])
+                };
+
+        if(map == 1) file1.write((convertToCSV(line) + "\n").getBytes());
+        else file2.write((convertToCSV(line) + "\n").getBytes());
     }
 
     private Vector2D[] generateAnimalPositions(){
         Vector2D[] positions = new Vector2D[this.startAnimalAmount];
+        ArrayList<Vector2D> possible = new ArrayList<>();
 
         ArrayList<Integer> list_x = new ArrayList<>();
         ArrayList<Integer> list_y = new ArrayList<>();
+        int howMuchY = (int) Math.ceil((float) startAnimalAmount / (float) width);
+
         for (int i=0; i<width; i++) list_x.add(i);
         for (int i=0; i<height; i++) list_y.add(i);
         Collections.shuffle(list_x);
         Collections.shuffle(list_y);
 
+
+        for(int i=0; i<width; i++){
+            for(int j=0; j<howMuchY; j++){
+                possible.add(new Vector2D(list_x.get(i), list_y.get(j)));
+            }
+            Collections.shuffle(list_y);
+        }
+
         for(int i=0; i<startAnimalAmount; i++){
-            positions[i] = new Vector2D(list_x.get(i), list_y.get(i));
+            positions[i] = possible.get(i);
         }
 
         return positions;
@@ -432,16 +505,48 @@ public class App extends Application {
                 gp_map1.getChildren().clear();
                 generateBoundaries(gp_map1);
                 generateObjects(gp_map1, worldMap1);
-                this.generatePlot(worldMap1.getStatistics(), lineChart1);
+                try {
+                    this.generatePlot(worldMap1.getStatistics(), lineChart1, 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
         } else {
             Platform.runLater(() -> {
                 gp_map2.getChildren().clear();
                 generateBoundaries(gp_map2);
                 generateObjects(gp_map2, worldMap2);
-                this.generatePlot(worldMap2.getStatistics(), lineChart2);
+                try {
+                    this.generatePlot(worldMap2.getStatistics(), lineChart2, 2);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
         }
 
+    }
+
+    public void notifyMagicMode(int day, int map){
+        magicLogs.add("MAP #" + map + "\nDay: " + day + " | magic rule executed\n");
+        String communicate = "";
+        for(String log : magicLogs){
+            communicate += log + "\n";
+        }
+        t_logs.setText(communicate);
+    }
+
+    public String convertToCSV(String[] data) {
+        return Stream.of(data)
+                .map(this::escapeSpecialCharacters)
+                .collect(Collectors.joining(","));
+    }
+
+    public String escapeSpecialCharacters(String data) {
+        String escapedData = data.replaceAll("\\R", " ");
+        if (data.contains(",") || data.contains("\"") || data.contains("'")) {
+            data = data.replace("\"", "\"\"");
+            escapedData = "\"" + data + "\"";
+        }
+        return escapedData;
     }
 }
