@@ -31,6 +31,8 @@ public class WorldMap extends AbstractWorldMap {
     private ArrayList<Vector2D> fieldsToReproduce = new ArrayList<>();
     private ArrayList<Animal> recentDeadAnimal = new ArrayList<>();
 
+    private ArrayList<Vector2D> junglePositions = new ArrayList<>();
+
 //    Constructors
     public WorldMap(int width, int height, int plantEnergy, float jungleRatio, boolean borderedMode, int movementCost){
         this.width = width;
@@ -50,11 +52,11 @@ public class WorldMap extends AbstractWorldMap {
         this.offsetX = (this.width - this.jungleWidth) / 2;
         this.offsetY = (this.height - this.jungleHeight) / 2;
 
-        this.generateNewPlants();
+        this.createNewPlants();
     }
 
     @Override
-    public void generateNewPlants(){
+    public void createNewPlants(){
         if(steppeGrassAmount < maxGrassInSteppe) this.generateSteppeGrass();
         if(jungleGrassAmount < maxGrassInJungle) this.generateJungleGrass();
     }

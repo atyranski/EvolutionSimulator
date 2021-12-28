@@ -51,7 +51,7 @@ public class SimulationEngine implements IEngine, Runnable {
                 this.moveAnimals();
                 map.feedAnimals();
                 this.animalReproduction();
-                map.generateNewPlants();
+                map.createNewPlants();
 
                 day += 1;
 

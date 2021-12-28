@@ -63,7 +63,7 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
 
     public void removeDeadAnimals(int day){}
 
-    public void generateNewPlants(){}
+    public void createNewPlants(){}
 
     public Vector2D[] getFreePositions(int size){
         Vector2D[] positions = new Vector2D[size];
