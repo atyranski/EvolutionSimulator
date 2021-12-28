@@ -307,6 +307,9 @@ public class App extends Application {
         Label l_buttonsMap1 = new Label("Map 1: ");
         Label l_buttonsMap2 = new Label("Map 2: ");
 
+        l_buttonsMap1.setTextFill(Color.color(1,1,1));
+        l_buttonsMap2.setTextFill(Color.color(1,1,1));
+
         Label l_logs = new Label("Logs: ");
         t_logs = new Text();
 

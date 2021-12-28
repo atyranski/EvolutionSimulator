@@ -285,9 +285,12 @@ public class WorldMap extends AbstractWorldMap {
             Collections.sort(possible, Comparator.comparingInt(Animal::getEnergy));
 
             CustomTuple tuple = new CustomTuple(possible.get(possible.size()-1), possible.get(possible.size()-2));
-            possible.get(possible.size()-1).reproductionLost();
-            possible.get(possible.size()-2).reproductionLost();
+            tuple.getFirstParent().reproductionLost();
+            tuple.getSecondParent().reproductionLost();
+//            possible.get(possible.size()-1).reproductionLost();
+//            possible.get(possible.size()-2).reproductionLost();
             tuples.add(tuple);
+            this.sumEnergy -= (tuple.getFirstParent().getEnergy() * 0.25 + tuple.getSecondParent().getEnergy() * 0.25);
             this.sumChildrenAmount += 2;
         }
 
