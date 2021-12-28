@@ -242,37 +242,70 @@ public class App extends Application {
         file1 = new FileOutputStream(fileMap1, false);
         file2 = new FileOutputStream(fileMap2, false);
 
-        Button b_start = new Button();
-        Button b_stop = new Button();
+        Button b_start1 = new Button();
+        Button b_stop1 = new Button();
+        Button b_start2 = new Button();
+        Button b_stop2 = new Button();
 
-        b_start.setText("Start");
-        b_start.setMinSize(100, 30);
-        b_stop.setMaxSize(100, 30);
-        b_start.setOnAction(actionEvent ->  {
+        b_start1.setText("Start");
+        b_start1.setMinSize(100, 30);
+        b_stop1.setMaxSize(100, 30);
+        b_start1.setOnAction(actionEvent ->  {
             this.isRunning = true;
 //            out.println(this.isRunning);
             engine1.setIsRunning(this.isRunning);
-            engine2.setIsRunning(this.isRunning);
+//            engine2.setIsRunning(this.isRunning);
 
-            b_start.setDisable(true);
-            b_stop.setDisable(false);
+            b_start1.setDisable(true);
+            b_stop1.setDisable(false);
         });
 
-        b_stop.setText("Stop");
-        b_stop.setDisable(true);
-        b_stop.setMinSize(100, 30);
-        b_stop.setMaxSize(100, 30);
-        b_stop.setOnAction(actionEvent ->  {
+        b_start2.setText("Start");
+        b_start2.setMinSize(100, 30);
+        b_stop1.setMaxSize(100, 30);
+        b_start2.setOnAction(actionEvent ->  {
+            this.isRunning = true;
+//            out.println(this.isRunning);
+//            engine1.setIsRunning(this.isRunning);
+            engine2.setIsRunning(this.isRunning);
+
+            b_start2.setDisable(true);
+            b_stop2.setDisable(false);
+        });
+
+        b_stop1.setText("Stop");
+        b_stop1.setDisable(true);
+        b_stop1.setMinSize(100, 30);
+        b_stop1.setMaxSize(100, 30);
+        b_stop1.setOnAction(actionEvent ->  {
             this.isRunning = false;
 //            out.println(this.isRunning);
             engine1.setIsRunning(this.isRunning);
-            engine2.setIsRunning(this.isRunning);
+//            engine2.setIsRunning(this.isRunning);
 
-            b_start.setDisable(false);
-            b_stop.setDisable(true);
+            b_start1.setDisable(false);
+            b_stop1.setDisable(true);
         });
 
-        HBox hbox_buttonsRow = new HBox(b_start, b_stop);
+        b_stop2.setText("Stop");
+        b_stop2.setDisable(true);
+        b_stop2.setMinSize(100, 30);
+        b_stop2.setMaxSize(100, 30);
+        b_stop2.setOnAction(actionEvent ->  {
+            this.isRunning = false;
+//            out.println(this.isRunning);
+//            engine1.setIsRunning(this.isRunning);
+            engine2.setIsRunning(this.isRunning);
+
+            b_start2.setDisable(false);
+            b_stop2.setDisable(true);
+        });
+
+        HBox hbox_buttonsRow1 = new HBox(b_start1, b_stop1);
+        HBox hbox_buttonsRow2 = new HBox(b_start2, b_stop2);
+
+        Label l_buttonsMap1 = new Label("Map 1: ");
+        Label l_buttonsMap2 = new Label("Map 2: ");
 
         Label l_logs = new Label("Logs: ");
         t_logs = new Text();
@@ -281,7 +314,7 @@ public class App extends Application {
         t_logs.setText("...");
         t_logs.setFill(Color.WHITE);
 
-        VBox vbox_leftPanel = new VBox(hbox_buttonsRow, l_logs, t_logs);
+        VBox vbox_leftPanel = new VBox(l_buttonsMap1, hbox_buttonsRow1, l_buttonsMap2, hbox_buttonsRow2, l_logs, t_logs);
         vbox_leftPanel.setMinSize(LEFT_PANEL_SIZE,MAP_SIZE);
         vbox_leftPanel.setMargin(l_logs, new Insets(10, 10, 10, 10));
         vbox_leftPanel.setMargin(t_logs, new Insets(0, 10, 0, 10));
