@@ -31,8 +31,6 @@ public class WorldMap extends AbstractWorldMap {
     private ArrayList<Vector2D> fieldsToReproduce = new ArrayList<>();
     private ArrayList<Animal> recentDeadAnimal = new ArrayList<>();
 
-    private ArrayList<Vector2D> junglePositions = new ArrayList<>();
-
 //    Constructors
     public WorldMap(int width, int height, int plantEnergy, float jungleRatio, boolean borderedMode, int movementCost){
         this.width = width;
@@ -52,72 +50,120 @@ public class WorldMap extends AbstractWorldMap {
         this.offsetX = (this.width - this.jungleWidth) / 2;
         this.offsetY = (this.height - this.jungleHeight) / 2;
 
+        this.generatePlants();
         this.createNewPlants();
     }
 
     @Override
     public void createNewPlants(){
-        if(steppeGrassAmount < maxGrassInSteppe) this.generateSteppeGrass();
-        if(jungleGrassAmount < maxGrassInJungle) this.generateJungleGrass();
+//        if(steppeGrassAmount < maxGrassInSteppe) this.generateSteppeGrass();
+//        if(jungleGrassAmount < maxGrassInJungle) this.generateJungleGrass();
+        if(steppePositions.keySet().size() > 0) this.generateSteppeGrass();
+        if(junglePositions.keySet().size() > 0) this.generateJungleGrass();
+    }
+
+    private void generatePlants(){
+        out.println(offsetX);
+        out.println(offsetY);
+        for(int x=0; x<width; x++){
+            for(int y=0; y<height; y++){
+                if(x > offsetX && x < offsetX + jungleWidth){
+                    if(y > offsetY && y < offsetY + jungleHeight){
+                        junglePositions.put(new Vector2D(x, y), true);
+                        continue;
+                    }
+                }
+                steppePositions.put(new Vector2D(x, y), true);
+//                if((x < offsetX || x > offsetX + jungleWidth) && (y < offsetY || y > offsetY + jungleHeight)) {
+//                    steppePositions.put(new Vector2D(x, y), true);
+//                } else {
+//                    junglePositions.put(new Vector2D(x, y), true);
+//                }
+            }
+        }
+
+        out.println("Jungle");
+        for(Vector2D key : junglePositions.keySet()){
+            out.println(key);
+        }
+
+        out.println("Steppe");
+        for(Vector2D key : steppePositions.keySet()){
+            out.println(key);
+        }
     }
 
     private void generateSteppeGrass(){
-        Vector2D position;
-        double quarter;
+//        Vector2D position;
+//        double quarter;
+//
+//        while (true){
+//            quarter = Math.random();
+//
+//            if(quarter < 0.25){
+//                // pierwsza
+//                position = new Vector2D(
+//                        (int) (0 + (Math.random() * ((width - offsetX) - 0))),
+//                        (int) (0 + (Math.random() * (offsetY - 0)))
+//                );
+//            } else if (quarter < 0.5){
+//                // druga
+//                position = new Vector2D(
+//                        (int) (0 + (Math.random() * (offsetX - 0))) + (width - offsetX),
+//                        (int) (0 + (Math.random() * ((height - offsetY) - 0)))
+//                );
+//            } else if (quarter < 0.75){
+//                // trzecia
+//                position = new Vector2D(
+//                        (int) (0 + (Math.random() * ((width - offsetX) - 0))) + offsetX,
+//                        (int) (0 + (Math.random() * (offsetY - 0))) + (height - offsetY)
+//                );
+//            } else {
+//                // czwarta
+//                position = new Vector2D(
+//                        (int) (0 + (Math.random() * (offsetX - 0))),
+//                        (int) (0 + (Math.random() * ((height - offsetY) - 0))) + offsetY
+//                );
+//            }
+//
+//            if(!mapObjects.containsKey(position)) break;
+//        }
+//
+        Set<Vector2D> keySet = steppePositions.keySet();
+        List<Vector2D> positions = new ArrayList<>(keySet);
 
-        while (true){
-            quarter = Math.random();
-
-            if(quarter < 0.25){
-                // pierwsza
-                position = new Vector2D(
-                        (int) (0 + (Math.random() * ((width - offsetX) - 0))),
-                        (int) (0 + (Math.random() * (offsetY - 0)))
-                );
-            } else if (quarter < 0.5){
-                // druga
-                position = new Vector2D(
-                        (int) (0 + (Math.random() * (offsetX - 0))) + (width - offsetX),
-                        (int) (0 + (Math.random() * ((height - offsetY) - 0)))
-                );
-            } else if (quarter < 0.75){
-                // trzecia
-                position = new Vector2D(
-                        (int) (0 + (Math.random() * ((width - offsetX) - 0))) + offsetX,
-                        (int) (0 + (Math.random() * (offsetY - 0))) + (height - offsetY)
-                );
-            } else {
-                // czwarta
-                position = new Vector2D(
-                        (int) (0 + (Math.random() * (offsetX - 0))),
-                        (int) (0 + (Math.random() * ((height - offsetY) - 0))) + offsetY
-                );
-            }
-
-            if(!mapObjects.containsKey(position)) break;
-        }
-
-
-        Grass grass = new Grass(position, this.plantEnergy);
-        mapObjects.put(position, new ArrayList<>(Arrays.asList(grass)));
+        Collections.shuffle(positions);
+        int index = (int) Math.random() * positions.size();
+        Grass grass = new Grass(positions.get(index), this.plantEnergy);
+        mapObjects.put(positions.get(index), new ArrayList<>(Arrays.asList(grass)));
         this.steppeGrassAmount += 1;
+        steppePositions.remove(positions.get(index));
     }
 
     private void generateJungleGrass(){
-        Vector2D position;
+//        Vector2D position;
+//
+//        while (true){
+//            int x = (int) (Math.random() * width*jungleRatio);
+//
+//            int y = (int) (Math.random() * height*jungleRatio);
+//
+//            position = new Vector2D(x + offsetX, y + offsetY);
+//            if(!mapObjects.containsKey(position)) break;
+//        }
+//
+//        Grass grass = new Grass(position, this.plantEnergy);
+//        mapObjects.put(position, new ArrayList<>(Arrays.asList(grass)));
+//        this.jungleGrassAmount += 1;
+        Set<Vector2D> keySet = junglePositions.keySet();
+        List<Vector2D> positions = new ArrayList<>(keySet);
 
-        while (true){
-            int x = (int) (Math.random() * width*jungleRatio);
-
-            int y = (int) (Math.random() * height*jungleRatio);
-
-            position = new Vector2D(x + offsetX, y + offsetY);
-            if(!mapObjects.containsKey(position)) break;
-        }
-
-        Grass grass = new Grass(position, this.plantEnergy);
-        mapObjects.put(position, new ArrayList<>(Arrays.asList(grass)));
+        Collections.shuffle(positions);
+        int index = (int) Math.random() * positions.size();
+        Grass grass = new Grass(positions.get(index), this.plantEnergy);
+        mapObjects.put(positions.get(index), new ArrayList<>(Arrays.asList(grass)));
         this.jungleGrassAmount += 1;
+        junglePositions.remove(positions.get(index));
     }
 
 //    Public methods
@@ -222,6 +268,10 @@ public class WorldMap extends AbstractWorldMap {
 
                 if(mapObjects.get(animal.getPosition()).size() == 1) {
                     mapObjects.remove(animal.getPosition());
+                    if(new Vector2D(this.offsetX, this.offsetY).follows(animal.getPosition())
+                            && new Vector2D(this.offsetX + this.jungleWidth, this.offsetY + this.offsetY).precedes(animal.getPosition())) {
+                        junglePositions.put(animal.getPosition(), true);
+                    } else steppePositions.put(animal.getPosition(), true);
                 } else {
                     ArrayList<IMapElement> objects = mapObjects.get(animal.getPosition());
                     int index = -1;
@@ -314,14 +364,24 @@ public class WorldMap extends AbstractWorldMap {
         IMapElement animal = objects.get(index);
         objects.remove(index);
 
-        if(objects.size() == 0) this.mapObjects.remove(oldPosition);
+        if(objects.size() == 0) {
+            this.mapObjects.remove(oldPosition);
+            if(new Vector2D(this.offsetX, this.offsetY).follows(oldPosition)
+                    && new Vector2D(this.offsetX + this.jungleWidth, this.offsetY + this.offsetY).precedes(oldPosition)) {
+                junglePositions.put(oldPosition, true);
+            } else steppePositions.put(oldPosition, true);
+        }
         else {
             ArrayList<IMapElement> toPut = new ArrayList<>(objects);
             this.mapObjects.put(oldPosition, toPut);
         }
 
         ArrayList<IMapElement> objectsInNew;
-        if(this.mapObjects.get(newPosition) == null) objectsInNew = new ArrayList<>();
+        if(this.mapObjects.get(newPosition) == null) {
+            objectsInNew = new ArrayList<>();
+            if(junglePositions.containsKey(newPosition)) junglePositions.remove(newPosition);
+            else if(steppePositions.containsKey(newPosition)) steppePositions.remove(newPosition);
+        }
         else {
             objectsInNew = this.mapObjects.get(newPosition);
             if(objectsInNew.get(0).getClass().equals(Grass.class)) fieldsToFeed.add(newPosition);

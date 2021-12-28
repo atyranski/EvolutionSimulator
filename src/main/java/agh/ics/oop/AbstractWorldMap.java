@@ -35,6 +35,9 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
     protected int sumLifespan = 0;
     protected int sumChildrenAmount = 0;
 
+    protected HashMap<Vector2D, Boolean> junglePositions = new HashMap<>();
+    protected HashMap<Vector2D, Boolean> steppePositions = new HashMap<>();
+
     public boolean isBordered(){
         return this.borderedMode;
     }
@@ -90,6 +93,10 @@ abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver{
             ArrayList<IMapElement> list = mapObjects.get(animal.getPosition());
             list.add(animal);
         }
+
+        if(junglePositions.containsKey(animal.getPosition())) junglePositions.remove(animal.getPosition());
+        else if(steppePositions.containsKey(animal.getPosition())) steppePositions.remove(animal.getPosition());
+
         this.animalAmount += 1;
         this.sumEnergy += animal.getEnergy();
         return true;
